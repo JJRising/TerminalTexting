@@ -1,0 +1,6 @@
+INFO:root:Logging started
+DEBUG:root:connectAsServer()
+DEBUG:root:connectAsServer()
+DEBUG:root:__serverConnection
+DEBUG:root:True
+INFO:root:Done

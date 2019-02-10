@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<resources>
+	<string name="options_connect">Exit: ^X    Connect as server: ^N    Connect to MAC Address: ^U</string>
+	<string name="info_connect_options">Select and option</string>
+	<string name="info_connect">Looking for a connection</string>
+	<string name="options_listen">Disconnect: ^X    Compose: ^O    Reply: ^E</string>
+	<string name="info_listen">Listening for messages... Select an option.</string>
+	<string name="options_compose">Cancel: ^E    Send: ^K</string>
+	<string name="info_compose">Compose a message.</string>
+	<string name="info_connect_attempting">Attempting to make a connection via Bluetooth</string>
+	<string name="info_listen">Connection Good</string>
+</resources>
