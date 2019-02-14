@@ -11,6 +11,8 @@ import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.Objects;
 
 abstract class SMSHandler {
@@ -25,6 +27,56 @@ abstract class SMSHandler {
         smsReceivedFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
         mSmsReceiver = new SmsReceiver();
         receiverContext.registerReceiver(mSmsReceiver, smsReceivedFilter);
+    }
+
+    static class MessagePackage {
+        String number;
+        String contactName;
+        String message;
+
+        MessagePackage(String number, String contactName, String message) {
+            if (number.length() != 12) {
+                if (number.length() == 10) {
+                    this.number = "+1" + number;
+                }
+            } else {
+                this.number = number;
+            }
+            this.contactName = contactName;
+            this.message = message;
+        }
+
+        MessagePackage(byte[] bytes) {
+            ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+            // Read the number
+            byte[] myNumberBytes = new byte[12];
+            in.read(myNumberBytes, 0, 12);
+            number = new String(myNumberBytes);
+            // Read how long the contact name is
+            byte[] contactLength = new byte[1];
+            in.read(contactLength, 12, 1);
+            // Read the contact name.
+            byte[] myContactNameBytes = new byte[(int) contactLength[0]];
+            in.read(myContactNameBytes, 13, (int) contactLength[0]);
+            contactName = new String(myContactNameBytes);
+            // Read how long the message is.
+            byte[] messageLength = new byte[1];
+            in.read(messageLength, 13 + (int) contactLength[0], 1);
+            // Read the rest of the message.
+            byte[] myMessageBytes = new byte[(int) messageLength[1]];
+            in.read(myMessageBytes, 13 + (int) contactLength[0], (int) messageLength[1]);
+            message = new String(myMessageBytes);
+        }
+
+        byte[] getBytes() {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            out.write(number.getBytes(), 0, 12);
+            out.write(contactName.length());
+            out.write(contactName.getBytes(), 0, contactName.length());
+            out.write(message.length());
+            out.write(message.getBytes(), 0, message.length());
+            return out.toByteArray();
+        }
     }
 
     public void close() {

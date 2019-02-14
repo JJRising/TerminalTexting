@@ -10,7 +10,9 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.telephony.SmsManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -402,16 +404,16 @@ public class BluetoothService extends IntentService {
             Log.i(LOG_TAG, "BEGIN mListenerThread");
             byte[] buffer = new byte[1024];
             int bytes;
-            String msg;
+            SMSHandler.MessagePackage msgPack;
 
 
             // Keep listening to the InputStream while connected
             while (mState == Constants.STATE_CONNECTED) {
                 try {
                     bytes = mmInStream.read(buffer);
-                    msg = new String(buffer);
-
-
+                    if (bytes <= 13) {
+                        throw new IOException("Incoming message was too short.");
+                    }
                 } catch (IOException e) {
                     Log.i(LOG_TAG, "disconnected\n" + e.toString());
                     try {
@@ -423,6 +425,13 @@ public class BluetoothService extends IntentService {
                     connectionLost();
                     break;
                 }
+                msgPack = new SMSHandler.MessagePackage(buffer);
+                Toast.makeText(BluetoothService.this,
+                        "Sending message to: " + msgPack.number,
+                        Toast.LENGTH_SHORT).show();
+//                SmsManager smsManager = SmsManager.getDefault();
+//                smsManager.sendTextMessage(msgPack.number, null, msgPack.message,
+//                        null, null);
             }
             Log.d(LOG_TAG, "ListenerThread is finishing");
             mSMSHandler.close();
