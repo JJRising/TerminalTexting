@@ -11,8 +11,8 @@
     <string name="no_paired_devices">No pair devices found</string>
     <string name="title_new_devices">New Found Devices</string>
     <string name="no_found_devices">No devices found</string>
-    <string name="device_name">Device Name</string>
-    <string name="device_id">Device ID</string>
+    <string name="device_name">Device Name:</string>
+    <string name="device_id">Device ID:</string>
     <string name="connect_button_connect">Connect to a new device…</string>
     <string name="connect_button_disconnect">Disconnect from the device…</string>
     <string name="send_test">Send Test</string>
@@ -22,4 +22,6 @@
     <string name="state_connected">Connected!</string>
     <string name="status_debug">Bad status</string>
     <string name="messaging_app_switch_title">Use TerminalTexting for SMS</string>
+    <string name="failed_connection">The bluetooth connection failed to be made.</string>
+    <string name="lost_connection">The bluetooth connection was lost.</string>
 </resources>

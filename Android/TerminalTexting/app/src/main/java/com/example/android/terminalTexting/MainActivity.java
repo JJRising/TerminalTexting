@@ -1,18 +1,21 @@
 package com.example.android.terminalTexting;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
+import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,25 +24,25 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String LOG_TAG = "MainActivity";
 
     // Permission request codes
     private static final int MY_PERMISSIONS_REQUEST_SEND_SMS = 1;
     private static final int MY_PERMISSIONS_REQUEST_RECEIVE_SMS = 2;
+    private static final int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 3;
 
     // Intent request codes
-    private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
-    private static final int REQUEST_CONNECT_DEVICE_UNSECURED = 2;
-    private static final int REQUEST_ENABLE_BT = 3;
+    private static final int REQUEST_CONNECT_DEVICE = 1;
+    private static final int REQUEST_ENABLE_BT = 2;
+
+    private BluetoothStateReceiver mBluetoothStateReceiver;
 
     // UI elements
     private TextView mStatusText;
+    private TextView mDeviceNameText;
+    private TextView mDeviceAddressText;
     private TextView mLogText;
     private Button mConnectButton;
-
-    private BluetoothAdapter mBtAdapter;
-    private BluetoothConnectionService mBTS;
-
-    private int connectionState = Constants.STATE_NONE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,28 +50,55 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        mBtAdapter = BluetoothAdapter.getDefaultAdapter();
-        mBTS = new BluetoothConnectionService(mHandler);
+
+        // IntentFilter for the BluetoothStateReceiver
+        IntentFilter bluetoothStatusFilter = new IntentFilter();
+        bluetoothStatusFilter.addAction(Constants.CONNECTED_ACTION);
+        bluetoothStatusFilter.addAction(Constants.FAILED_CONNECTION_ACTION);
+        bluetoothStatusFilter.addAction(Constants.LOST_CONNECTION_ACTION);
+        bluetoothStatusFilter.addAction(Constants.NEW_STATE_ACTION);
+        mBluetoothStateReceiver = new BluetoothStateReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                mBluetoothStateReceiver,
+                bluetoothStatusFilter);
 
         // Get the UI elements
         mConnectButton = findViewById(R.id.connect_button);
         mStatusText = findViewById(R.id.status_text);
+        mDeviceNameText = findViewById(R.id.device_name);
+        mDeviceAddressText = findViewById(R.id.device_id);
         updateStatus(Constants.STATE_NONE);
         mLogText = findViewById(R.id.comm_log);
+
+        // TODO: Address the warning about permission requests having to be one at a time.
+        // Required Permissions
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.SEND_SMS},
+                MY_PERMISSIONS_REQUEST_SEND_SMS);
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.RECEIVE_SMS},
+                MY_PERMISSIONS_REQUEST_RECEIVE_SMS);
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
+
+        // Try to bind to a active BluetoothService
+        Intent intent = new Intent(this, BluetoothService.class);
+        intent.setAction(Constants.REQUEST_UPDATE_ACTION);
+        requestUpdateConnectionIsBound = bindService(intent, requestUpdateConnection, 0);
+        Log.d(LOG_TAG, "IsBound: " + requestUpdateConnectionIsBound.toString());
 
         textLog("Main activity created");
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        // If BT is not on, request that it be enabled.
-        // setupChat() will then be called during onActivityResult
-        if (!mBtAdapter.isEnabled()) {
-            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-            // Otherwise, setup the chat session
-        }
+    protected void onDestroy() {
+        if (requestUpdateConnectionIsBound)
+            unbindService(requestUpdateConnection);
+        if (writeToDeviceConnectionIsBound)
+            unbindService(writeToDeviceConnection);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBluetoothStateReceiver);
+        super.onDestroy();
     }
 
     @Override
@@ -93,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateStatus(int newStatus) {
+    void updateStatus(int newStatus) {
         String statusTitle = getString(R.string.status);
         String statusTxt;
         switch (newStatus) {
@@ -115,41 +145,61 @@ public class MainActivity extends AppCompatActivity {
                 statusTxt = getString(R.string.status_debug);
                 break;
         }
-        connectionState = newStatus;
         String displayTxt = statusTitle + " " + statusTxt;
         mStatusText.setText(displayTxt);
     }
 
-    public void connectNewDevice(View view) {
-        if (connectionState == Constants.STATE_NONE) {
-            Intent intent = new Intent(MainActivity.this, DeviceListActivity.class);
-            startActivityForResult(intent, REQUEST_CONNECT_DEVICE_SECURE);
-        } else if (connectionState == Constants.STATE_CONNECTED) {
-            mBTS.stop();
-        }
+    void updateConnectedDevice(String name, String address) {
+        String nameTitle = getString(R.string.device_name);
+        String addressTitle = getString(R.string.device_id);
+        String displayName = nameTitle + " " + name;
+        String displayAddress = addressTitle + " " + address;
+        mDeviceNameText.setText(displayName);
+        mDeviceAddressText.setText(displayAddress);
     }
 
+    /**
+     * OnClick function for the Connect button.
+     *
+     * @param view: The view element for the connect button
+     */
+    public void connectNewDevice(View view) {
+        Intent intent = new Intent(this, DeviceListActivity.class);
+        startActivityForResult(intent, REQUEST_CONNECT_DEVICE);
+    }
+
+    /**
+     * OnClick function for the Send Test button
+     *
+     * @param view: The view element for the send test button
+     */
     public void sendTest(View view) {
         String testString = "Test string to be sent.";
-        mBTS.write(testString.getBytes());
+        // TODO: Write to the bluetooth socket
+        textLog("Pressed Send Text");
+
+        Intent intent = new Intent(this, BluetoothService.class);
+        intent.setAction(Constants.WRITE_TO_REMOTE_DEVICE_ACTION);
+        intent.putExtra(Constants.MESSAGE_TO_WRITE, testString);
+        writeToDeviceConnectionIsBound = bindService(intent, writeToDeviceConnection, 0);
+    }
+
+    public void switchMessagingApp(View view) {
+        // TODO
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         switch (requestCode) {
-            case REQUEST_CONNECT_DEVICE_SECURE:
+            case REQUEST_CONNECT_DEVICE:
                 if (resultCode == Activity.RESULT_OK) {
-                    connectDevice(data, true);
+                    connectDevice(data);
                 }
                 break;
-            case REQUEST_CONNECT_DEVICE_UNSECURED:
-                if (resultCode == Activity.RESULT_OK) {
-                    connectDevice(data, false);
-                }
         }
     }
 
-    private void connectDevice(Intent data, boolean secure) {
+    private void connectDevice(Intent data) {
         // Display Toast message that you are trying to connect
         String deviceName;
         try {
@@ -161,53 +211,81 @@ public class MainActivity extends AppCompatActivity {
                 Toast.LENGTH_SHORT).show();
         // Get the MAC address
         String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-        BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
 
         // Log the action
         String txt = "attempting to connect to:\n" + deviceName + "\n" + address;
         textLog(txt);
 
-        int MY_PERMISSIONS_REQUEST_BLUETOOTH = 1;
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.BLUETOOTH},
-                MY_PERMISSIONS_REQUEST_BLUETOOTH);
-
-        mBTS.connect(device, secure);
+        BluetoothService.startClientConnect(this, address);
     }
 
-    private void textLog(String txt) {
-        String mytxt = "\n" + txt;
-        mLogText.append(mytxt);
+    void textLog(String txt) {
+        String my_txt = "\n" + txt;
+        mLogText.append(my_txt);
     }
 
-    @SuppressLint("HandlerLeak")
-    private final Handler mHandler = new Handler() {
+    private Boolean requestUpdateConnectionIsBound = false;
+    private ServiceConnection requestUpdateConnection = new ServiceConnection() {
+        // Called when the connection with the service is established
         @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case Constants.MESSAGE_STATE_CHANGE:
-                    updateStatus(msg.arg1);
-                    break;
-                case Constants.MESSAGE_READ:
-                    break;
-                case Constants.MESSAGE_WRITE:
-                    break;
-                case Constants.MESSAGE_DEVICE_NAME:
-                    String deviceName = msg.getData().getString(Constants.DEVICE_NAME);
-                    Toast.makeText(MainActivity.this, "Connected to " + deviceName,
-                            Toast.LENGTH_SHORT).show();
-                    break;
-                case Constants.MESSAGE_TOAST:
-                    Toast.makeText(MainActivity.this,
-                            msg.getData().getString(Constants.TOAST), Toast.LENGTH_SHORT).show();
-                    break;
-                case Constants.MESSAGE_TEXTLOG:
-                    textLog(msg.getData().getString(Constants.TEXT));
-                    break;
-            }
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d(LOG_TAG, service.toString());
+            BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
+            BluetoothService btService = binder.getService();
+            int state = btService.getState();
+            String deviceName = btService.getDeviceName();
+            String deviceAddress = btService.getDeviceAddress();
+            updateStatus(state);
+            updateConnectedDevice(deviceName, deviceAddress);
+            unbindService(this);
+            requestUpdateConnectionIsBound = false;
+        }
+
+        // Called when the connection with the service disconnects unexpectedly
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            updateStatus(Constants.STATE_NONE);
+            updateConnectedDevice("", "");
         }
     };
 
-    public void switchMessagingApp(View view) {
+    private Boolean writeToDeviceConnectionIsBound = false;
+    private ServiceConnection writeToDeviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            unbindService(this);
+            writeToDeviceConnectionIsBound = false;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+        }
+    };
+
+
+    public class BluetoothStateReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("BtStateReceiver", context.toString());
+            switch (intent.getAction()) {
+                case Constants.CONNECTED_ACTION:
+                    String name = intent.getExtras().getString(Constants.DEVICE_NAME);
+                    String address = intent.getExtras().getString(Constants.DEVICE_ADDRESS);
+                    updateConnectedDevice(name, address);
+                    break;
+                case Constants.FAILED_CONNECTION_ACTION:
+                    textLog(getString(R.string.failed_connection));
+                    updateConnectedDevice("", "");
+                    break;
+                case Constants.LOST_CONNECTION_ACTION:
+                    textLog(getString(R.string.lost_connection));
+                    updateConnectedDevice("", "");
+                    break;
+                case Constants.NEW_STATE_ACTION:
+                    int state = intent.getExtras().getInt(Constants.BLUETOOTH_STATE);
+                    updateStatus(state);
+                    break;
+            }
+        }
     }
 }

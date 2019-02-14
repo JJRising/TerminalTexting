@@ -43,7 +43,7 @@ public class DeviceListActivity extends AppCompatActivity {
         // Setup the window
         setContentView(R.layout.activity_device_list);
 
-        // Set result CANCELED in case the user backs out
+        // Set result CANCELED in case the user backs outEXTRA_DEVICE_NAME
         setResult(Activity.RESULT_CANCELED);
 
         // Initialize the button to perform device discovery
@@ -66,7 +66,7 @@ public class DeviceListActivity extends AppCompatActivity {
         pairedListView.setAdapter(pairedDevicesArrayAdapter);
         pairedListView.setOnItemClickListener(mDeviceClickListener);
 
-        // Find and set up the ListViewdevice for newly discovered devices
+        // Find and set up the ListViewDevice for newly discovered devices
         mNewDeviceListView = findViewById(R.id.found_devices);
         mNewDeviceListView.setAdapter(mNewDeviceArrayAdapter);
         mNewDeviceListView.setOnItemClickListener(mDeviceClickListener);
