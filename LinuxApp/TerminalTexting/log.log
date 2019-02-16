@@ -1,0 +1,22 @@
+INFO:root:Logging started
+INFO:root:Curses started
+INFO:root:State: Start New State: Connect
+DEBUG:root:User Input: server connect
+DEBUG:root:CALLBACK!
+DEBUG:root:CONNECTING
+DEBUG:root:__serverConnection
+DEBUG:root:CALLBACK!
+DEBUG:root:CONNECTED
+DEBUG:root:User Input: pass
+INFO:root:State: Connect New State: Listen
+DEBUG:root:CALLBACK!
+DEBUG:root:NONE
+INFO:root:State: Listen New State: Disconnect
+DEBUG:root:CALLBACK!
+INFO:root:State: Disconnect New State: Connect
+DEBUG:root:User Input: server connect
+DEBUG:root:__serverConnection
+DEBUG:root:User Input: exit
+INFO:root:State: Connect New State: Stop
+INFO:root:ThreadedTextBox stopped
+INFO:root:DisplayWindow stoped

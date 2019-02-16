@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_ENABLE_BT = 2;
 
     private BluetoothStateReceiver mBluetoothStateReceiver;
+    private int mBluetoothState;
 
     // UI elements
     private TextView mStatusText;
@@ -95,8 +96,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         if (requestUpdateConnectionIsBound)
             unbindService(requestUpdateConnection);
-        if (writeToDeviceConnectionIsBound)
-            unbindService(writeToDeviceConnection);
+        if (basicServiceConnectionIsBound)
+            unbindService(basicServiceConnection);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mBluetoothStateReceiver);
         super.onDestroy();
     }
@@ -126,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
     void updateStatus(int newStatus) {
         String statusTitle = getString(R.string.status);
         String statusTxt;
+        mBluetoothState = newStatus;
         switch (newStatus) {
             case Constants.STATE_NONE:
                 statusTxt = getString(R.string.state_none);
@@ -164,8 +166,12 @@ public class MainActivity extends AppCompatActivity {
      * @param view: The view element for the connect button
      */
     public void connectNewDevice(View view) {
-        Intent intent = new Intent(this, DeviceListActivity.class);
-        startActivityForResult(intent, REQUEST_CONNECT_DEVICE);
+        if (mBluetoothState == Constants.STATE_NONE) {
+            Intent intent = new Intent(this, DeviceListActivity.class);
+            startActivityForResult(intent, REQUEST_CONNECT_DEVICE);
+        } else if (mBluetoothState == Constants.STATE_CONNECTED) {
+            disconnectDevice();
+        }
     }
 
     /**
@@ -175,13 +181,11 @@ public class MainActivity extends AppCompatActivity {
      */
     public void sendTest(View view) {
         String testString = "Test string to be sent.";
-        // TODO: Write to the bluetooth socket
-        textLog("Pressed Send Text");
 
         Intent intent = new Intent(this, BluetoothService.class);
         intent.setAction(Constants.WRITE_TO_REMOTE_DEVICE_ACTION);
         intent.putExtra(Constants.MESSAGE_TO_WRITE, testString);
-        writeToDeviceConnectionIsBound = bindService(intent, writeToDeviceConnection, 0);
+        basicServiceConnectionIsBound = bindService(intent, basicServiceConnection, 0);
     }
 
     public void switchMessagingApp(View view) {
@@ -219,6 +223,12 @@ public class MainActivity extends AppCompatActivity {
         BluetoothService.startClientConnect(this, address);
     }
 
+    private void disconnectDevice() {
+        Intent intent = new Intent(this, BluetoothService.class);
+        intent.setAction(Constants.STOP_CURRENT_CONNECTION_ACTION);
+        basicServiceConnectionIsBound = bindService(intent, basicServiceConnection, 0);
+    }
+
     void textLog(String txt) {
         String my_txt = "\n" + txt;
         mLogText.append(my_txt);
@@ -249,12 +259,12 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private Boolean writeToDeviceConnectionIsBound = false;
-    private ServiceConnection writeToDeviceConnection = new ServiceConnection() {
+    private Boolean basicServiceConnectionIsBound = false;
+    private ServiceConnection basicServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             unbindService(this);
-            writeToDeviceConnectionIsBound = false;
+            basicServiceConnectionIsBound = false;
         }
 
         @Override
@@ -284,6 +294,8 @@ public class MainActivity extends AppCompatActivity {
                 case Constants.NEW_STATE_ACTION:
                     int state = intent.getExtras().getInt(Constants.BLUETOOTH_STATE);
                     updateStatus(state);
+                    break;
+                default:
                     break;
             }
         }

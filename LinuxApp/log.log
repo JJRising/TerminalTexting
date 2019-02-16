@@ -1,9 +1,0 @@
-INFO:root:Logging started
-INFO:root:Curses started
-INFO:root:State: Start New State: Connect
-DEBUG:root:User Input: server connect
-DEBUG:root:CALLBACK!
-DEBUG:root:__serverConnection
-DEBUG:root:CONNECTING
-DEBUG:root:User Input: exit
-INFO:root:State: Connect New State: Stop

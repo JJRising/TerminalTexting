@@ -26,6 +26,8 @@ public interface Constants {
             "com.example.android.terminalTexting.action.REQUEST_UPDATE";
     String WRITE_TO_REMOTE_DEVICE_ACTION =
             "com.example.android.terminalTexting.action.WRITE_TO_REMOTE_DEVICE";
+    String STOP_CURRENT_CONNECTION_ACTION =
+            "com.example.android.terminalTexting.action.STOP_CURRENT_CONNECTION_ACTION";
 
     String MESSAGE_TO_WRITE = "Message To Write";
 }

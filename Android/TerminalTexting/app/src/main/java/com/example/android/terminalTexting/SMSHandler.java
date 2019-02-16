@@ -83,7 +83,7 @@ abstract class SMSHandler {
         receiverContext.unregisterReceiver(mSmsReceiver);
     }
 
-    public abstract void callback(String msg);
+    public abstract void callback(MessagePackage msg);
 
     public void sendText(String phoneNumber, String smsMessage) {
         SmsManager smsManager = SmsManager.getDefault();
@@ -100,8 +100,6 @@ abstract class SMSHandler {
             Log.d(LOG_TAG, "Received Broadcast!");
             // Get the SMS message.
             Bundle bundle = intent.getExtras();
-            SmsMessage[] msgs;
-            StringBuilder strMessage = new StringBuilder();
             String format = Objects.requireNonNull(bundle).getString("format");
             // Retrieve the SMS message received.
             Object[] pdus = (Object[]) bundle.get(pdu_type);
@@ -109,7 +107,10 @@ abstract class SMSHandler {
                 // Check the Android version.
                 boolean isVersionM = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M);
                 // Fill msgs array.
+                SmsMessage[] msgs;
                 msgs = new SmsMessage[pdus.length];
+                String number, contactName;
+                StringBuilder fullMessage = new StringBuilder();
                 for (int i = 0; i < msgs.length; i++) {
                     // Check Android version and use appropriate createFromPdu.
                     if (isVersionM) {
@@ -121,14 +122,19 @@ abstract class SMSHandler {
                         msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
                     }
                     // Build the message to show.
-                    strMessage.append("SMS from ")
-                            .append(msgs[i].getOriginatingAddress())
-                            .append(" :")
-                            .append(msgs[i].getMessageBody()).append("\n");
+                    fullMessage.append(msgs[i].getMessageBody());
 
                     // Pass strMessage to the callback method
-                    callback(strMessage.toString());
                 }
+                number = msgs[0].getOriginatingAddress();
+                // TODO: contactName
+                contactName = "TempContactName";
+                MessagePackage msgPackage = new MessagePackage(
+                        number,
+                        contactName,
+                        fullMessage.toString());
+
+                callback(msgPackage);
             }
         }
     }

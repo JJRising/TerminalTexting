@@ -76,7 +76,12 @@ public class BluetoothService extends IntentService {
     }
 
     public void stop() {
-        stopSelf();
+        if (mListenerThread != null)
+            mListenerThread.cancel();
+        else if (mConnectThread != null)
+            mConnectThread.cancel();
+        mListenerThread = null;
+        mConnectThread = null;
     }
 
     @Nullable
@@ -93,6 +98,8 @@ public class BluetoothService extends IntentService {
                     mListenerThread.write(msg.getBytes());
                 }
                 break;
+            case Constants.STOP_CURRENT_CONNECTION_ACTION:
+                stop();
         }
         return mBinder;
     }
@@ -217,7 +224,7 @@ public class BluetoothService extends IntentService {
     //--------------------------------User Feedback----------------------------------------------//
 
     private void updateUserInterfaceToConnectedDevice(String deviceName,
-                                                                   String deviceAddress) {
+                                                      String deviceAddress) {
         Log.d(LOG_TAG, "Updating the User Interface");
         Intent intent = new Intent(Constants.CONNECTED_ACTION)
                 .putExtra(Constants.DEVICE_NAME, deviceName)
@@ -394,7 +401,7 @@ public class BluetoothService extends IntentService {
             // Set up the broadcast receiver to listen for incoming messages
             mSMSHandler = new SMSHandler(BluetoothService.this) {
                 @Override
-                public void callback(String msg) {
+                public void callback(MessagePackage msg) {
                     ListenerThread.this.write(msg.getBytes());
                 }
             };
