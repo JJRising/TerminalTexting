@@ -60,11 +60,12 @@ abstract class SMSHandler {
             in.read(myContactNameBytes, 13, (int) contactLength[0]);
             contactName = new String(myContactNameBytes);
             // Read how long the message is.
-            byte[] messageLength = new byte[1];
-            in.read(messageLength, 13 + (int) contactLength[0], 1);
+            byte[] m = new byte[4];
+            in.read(m, 13 + (int) contactLength[0], 4);
+            int messageLength = m[3]*128^3 + m[2]*128^2 + m[1]*128 + m[0];
             // Read the rest of the message.
-            byte[] myMessageBytes = new byte[(int) messageLength[1]];
-            in.read(myMessageBytes, 13 + (int) contactLength[0], (int) messageLength[1]);
+            byte[] myMessageBytes = new byte[messageLength];
+            in.read(myMessageBytes, 13 + (int) contactLength[0] + 4, messageLength);
             message = new String(myMessageBytes);
         }
 
@@ -73,7 +74,13 @@ abstract class SMSHandler {
             out.write(number.getBytes(), 0, 12);
             out.write(contactName.length());
             out.write(contactName.getBytes(), 0, contactName.length());
-            out.write(message.length());
+            Log.d("TERMTEXT.getBytes", Integer.toString(message.length()));
+            int mLength = message.length();
+            for (int i = 0; i < 4; i++) {
+                Log.d("TERMTEXT.getBytes", Integer.toString(mLength%128));
+                out.write(mLength%128);
+                mLength/=128;
+            }
             out.write(message.getBytes(), 0, message.length());
             return out.toByteArray();
         }
@@ -129,6 +136,7 @@ abstract class SMSHandler {
                 number = msgs[0].getOriginatingAddress();
                 // TODO: contactName
                 contactName = "TempContactName";
+                Log.d(LOG_TAG, fullMessage.toString());
                 MessagePackage msgPackage = new MessagePackage(
                         number,
                         contactName,
