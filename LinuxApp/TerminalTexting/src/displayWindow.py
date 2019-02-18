@@ -103,7 +103,7 @@ class DisplayWindow():
         title = title + " " # Adds a space
         color = lt[1]
         message = lt[2]
-        lineLenghtRemaining = self.__maxX
+        lineLenghtRemaining = self.__maxX - 4
         
         self.displayLock.acquire()
         # Print the title
@@ -118,7 +118,7 @@ class DisplayWindow():
             lt[2] = None
         else:
             tmp = message[:lineLenghtRemaining]
-            message = message[lineLenghtRemaining:]
+            message = message[lineLenghtRemaining:-1]
             lt[2] = message
             self.__win.addstr(tmp)
         self.displayLock.release()
@@ -127,7 +127,7 @@ class DisplayWindow():
         """Prints the next line of the message"""
         
         message = lt[2]
-        lineLenghtRemaining = self.__maxX
+        lineLenghtRemaining = self.__maxX - 4
         
         self.displayLock.acquire()
         
@@ -140,7 +140,7 @@ class DisplayWindow():
             lt[2] = None
         else:
             tmp = message[:lineLenghtRemaining]
-            message = message[lineLenghtRemaining:]
+            message = message[lineLenghtRemaining:-1]
             lt[2] = message
             self.__win.addstr(tmp)
             

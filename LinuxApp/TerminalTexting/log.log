@@ -9,13 +9,13 @@ DEBUG:root:CALLBACK!
 DEBUG:root:CONNECTED
 DEBUG:root:User Input: pass
 INFO:root:State: Connect New State: Listen
-DEBUG:root:CALLBACK!
-DEBUG:root:NONE
+INFO:root:b"+14166704782\x0fTempContactName\x0f\x01\x00\x00K. You don't need to spend long on it. I'm planning on doing 2 more drafts before the final. So Im looking for big picture notes at this point."
+DEBUG:root:143
+DEBUG:root:b"K. You don't need to spend long on it. I'm planning on doing 2 more drafts before the final. So Im looking for big picture notes at this point."
 INFO:root:State: Listen New State: Disconnect
+INFO:root:b''
 DEBUG:root:CALLBACK!
 INFO:root:State: Disconnect New State: Connect
-DEBUG:root:User Input: server connect
-DEBUG:root:__serverConnection
 DEBUG:root:User Input: exit
 INFO:root:State: Connect New State: Stop
 INFO:root:ThreadedTextBox stopped

@@ -5,6 +5,7 @@ Created on Jan 31, 2019
 '''
 
 from threading import Thread, Event
+import logging
 
 class BluetoothMessageFormatter():
     '''
@@ -33,9 +34,22 @@ class BluetoothMessageFormatter():
                                   'bluetoothManager', \
                                   message)
             while not self.messageQueue.empty():
-                message = self.messageQueue.get()
+                buffer = self.messageQueue.get()
+                number = buffer[0:12]
+                contactLength = int(buffer[12])
+                contact = buffer[13: 13 + contactLength]
+                messageLengthArray = buffer[13 + contactLength : \
+                                            13 + contactLength + 4]
+                messageLength = messageLengthArray[0] \
+                                + messageLengthArray[1]*128 \
+                                + messageLengthArray[2]*128*128 \
+                                + messageLengthArray[3]*128*128*128
+                message = buffer[13 + contactLength + 4 : \
+                                 13 + contactLength + 4 + messageLength]
+                logging.debug(messageLength)
+                logging.debug(message)
                 # TODO: Add formatting
-                self.dis.addEntry("Text Message:", \
+                self.dis.addEntry("Text Message from " + str(contact) + ": ", \
                                    'message recieved', \
                                    message)
                 
