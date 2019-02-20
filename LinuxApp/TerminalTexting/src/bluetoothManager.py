@@ -53,18 +53,18 @@ class BluetoothManager():
     
     def __init__(self, uuid, uiEvent=None):
         self.uuid = uuid
-        self.__state = Handler(self.STATE['none'])
-        self.__mySock = None            # Socket for this device
-        self.__remoteSock = None        # Socket for the remote device
-        self.__remoteInfo = None
-        self.__messageQueue = Queue()
-        self.__uiQueue = Queue()
+        self._state = Handler(self.STATE['none'])
+        self._mySock = None            # Socket for this device
+        self._remoteSock = None        # Socket for the remote device
+        self._remoteInfo = None
+        self._messageQueue = Queue()
+        self._uiQueue = Queue()
         if uiEvent == None:
-            self.__messageEvent = Event()
-            self.__uiEvent = Event()
+            self._messageEvent = Event()
+            self._uiEvent = Event()
         else:
-            self.__messageEvent = uiEvent
-            self.__uiEvent = uiEvent
+            self._messageEvent = uiEvent
+            self._uiEvent = uiEvent
         # Thread related variables
         self.__connectionThread = None
         self.__running = False
@@ -76,9 +76,9 @@ class BluetoothManager():
         Forks a new connection thread passing 'Server' along as an 
         argument'
         """
-        if self.__state.get() == self.STATE['none']:
+        if self._state.get() == self.STATE['none']:
             self.__running = True
-            self.__state.update(self.STATE['connecting'])
+            self._state.update(self.STATE['connecting'])
             self.__connectionThread = \
                             Thread(target=self.__run, args=("Server",))
             self.__connectionThread.start()
@@ -89,8 +89,8 @@ class BluetoothManager():
         Forks a new connection thread passing the macAddress along as
         an argument'
         """
-        if self.__state.get() == self.STATE['none']:
-            self.__state.update(self.STATE['connecting'])
+        if self._state.get() == self.STATE['none']:
+            self._state.update(self.STATE['connecting'])
             self.__running = True
             self.__connectionThread = \
                             Thread(target=self.__run, args=(macAddress,))
@@ -98,11 +98,11 @@ class BluetoothManager():
           
     def isConnected(self):
         """Return True if there is a current connection"""
-        return self.__state.get() == self.STATE['connected']
+        return self._state.get() == self.STATE['connected']
     
     def who(self):
         """Return the name and MAC_ADDRESS of the connection"""
-        return self.__remoteInfo
+        return self._remoteInfo
     
     def write(self, buffer, sync=True):
         """Fork a thread to send 'buffer' as byte data to a connection.
@@ -117,7 +117,7 @@ class BluetoothManager():
         True. Otherwise it will attempt to join the forked thread.
         """
         # Check to see if there is a connection
-        if self.__state.get() != self.STATE['connected']:
+        if self._state.get() != self.STATE['connected']:
             raise BluetoothWriteError()
         myThread = Thread(target=self.__writeThread(), args=(buffer,))
         myThread.start()
@@ -134,25 +134,25 @@ class BluetoothManager():
         """Stop the thread managing the connection and join it."""
         
         self.__running = False
-        if self.__remoteSock != None:
+        if self._remoteSock != None:
             try:
-                self.__remoteSock.shutdown(2)
-                self.__remoteSock.close()
-                self.__remoteSock = None
+                self._remoteSock.shutdown(2)
+                self._remoteSock.close()
+                self._remoteSock = None
             except:
                 raise BluetoothManagerError("Unable to close remote socket")
-        if self.__mySock != None:
+        if self._mySock != None:
             try:
-                self.__mySock.shutdown(2)
-                self.__mySock.close()
-                self.__mySock = None
+                self._mySock.shutdown(2)
+                self._mySock.close()
+                self._mySock = None
             except:
                 raise BluetoothManagerError("Unable to close local socket")
         if self.__connectionThread != None:
             self.__connectionThread.join()
         self.__connectionThread = None
-        self.__state.update(self.STATE['none'])
-        self.__state.stop()
+        self._state.update(self.STATE['none'])
+        self._state.stop()
     
     def setStateCallback(self, callback, args=()):
         """Set a callback function for when connection state changes
@@ -162,21 +162,18 @@ class BluetoothManager():
         BluetoothManager.STATE constant for possible states and the
         Handler docs for more information on how to write the callback.
         """
-        self.__state.setCallback(callback, args)
+        self._state.setCallback(callback, args)
         
     def startStateCallback(self):
         """Start the listener for when connection state changes"""
-        self.__state.start()
+        self._state.start()
         
     def stopStateCallback(self):
         """Stop the listener for when connection state changes"""
-        self.__state.stop()
-        
-    def setStateCallbaak(self, callback, args=()):
-        self.__state.setCallback(callback, args)
+        self._state.stop()
         
     def getQueues(self):
-        return [self.__messageQueue, self.__uiQueue]
+        return [self._messageQueue, self._uiQueue]
     
     def getMessageQueueEvent(self):
         """Return the Queue of messages and it's Event
@@ -190,7 +187,7 @@ class BluetoothManager():
         The Event is set everytime a new messages is added to the
         Queue. 
         """
-        return (self.__messageQueue, self.__messageEvent)
+        return (self._messageQueue, self._messageEvent)
     
     
     # ========================Internal Methods========================
@@ -221,20 +218,20 @@ class BluetoothManager():
         
         logging.debug("__serverConnection")
         try:
-            self.__mySock = bluetooth.BluetoothSocket()
-            self.__mySock.bind(("", bluetooth.PORT_ANY))
-            self.__mySock.listen(1)
+            self._mySock = bluetooth.BluetoothSocket()
+            self._mySock.bind(("", bluetooth.PORT_ANY))
+            self._mySock.listen(1)
         except Exception as e:
             self.__connectionFailed("Failed to create a server socket.")
             raise BluetoothManagerError(e)
             return self.__FAILURE
         
         self._uiMessage("Successfully obtained a socket: " \
-                         + str(self.__mySock))
+                         + str(self._mySock))
         
         try:
             bluetooth.advertise_service( \
-                sock=self.__mySock, \
+                sock=self._mySock, \
                 name="TerminalTexting", \
                 service_id=self.uuid, \
                 service_classes=[self.uuid, bluetooth.SERIAL_PORT_CLASS], \
@@ -248,8 +245,8 @@ class BluetoothManager():
         self._uiMessage("Awaiting connection")
         
         try:
-            self.__remoteSock, self.__remoteInfo = \
-                                            self.__mySock.accept()
+            self._remoteSock, self._remoteInfo = \
+                                            self._mySock.accept()
         except Exception as e:
             self.__connectionFailed("There was an issue accepting " \
                                     "connections.")
@@ -278,10 +275,10 @@ class BluetoothManager():
             return self.__FAILURE
         
         match = foundServices[0]
-        self.__remoteInfo = (match['host'], match['port'])
-        self.__remoteSock = bluetooth.BluetoothSocket()
+        self._remoteInfo = (match['host'], match['port'])
+        self._remoteSock = bluetooth.BluetoothSocket()
         try:
-            self.__remoteSock.connect(self.__remoteInfo)
+            self._remoteSock.connect(self._remoteInfo)
         except Exception as e:
             self.__connectionFailed("Error when connecting to device")
             raise BluetoothManagerError(e)
@@ -291,25 +288,25 @@ class BluetoothManager():
     
     def __connectionMade(self):
         """Update the state and message the ui"""
-        self.__state.update(self.STATE['connected'])
+        self._state.update(self.STATE['connected'])
         self._uiMessage("Connection Successful\nTarget: " \
-                         + str(self.__remoteInfo))
+                         + str(self._remoteInfo))
     
     def __connectionFailed(self, reason):
         """Update the state and message the ui"""
-        self.__state.update(self.STATE['none'])
+        self._state.update(self.STATE['none'])
         self._uiMessage("Connection Failed\nReason: " + str(reason))
         
     def __connectionLost(self, reason):
         """Update the state and message the ui"""
-        self.__state.update(self.STATE['none'])
+        self._state.update(self.STATE['none'])
         self._uiMessage("Connection Lost\nReason: " + str(reason))
     
     def __listen(self):
         """Try to recieve messages over bluetooth and pass to the ui"""
-        while self.__state.get() == self.STATE['connected']:
+        while self._state.get() == self.STATE['connected']:
             try:
-                buffer = self.__remoteSock.recv(1024)
+                buffer = self._remoteSock.recv(1024)
                 self._recievedMessage(buffer)
             except IOError:
                 self.__connectionLost("Problem listening for incoming " \
@@ -320,7 +317,7 @@ class BluetoothManager():
     def __writeThread(self, buffer):
         """Attempt to send buffer to the connected device."""
         try:
-            self.__remoteSock.send(buffer)
+            self._remoteSock.send(buffer)
         except IOError:
             self._uiMessage(self.WRITE_FAILED)
         else:
@@ -329,14 +326,14 @@ class BluetoothManager():
     def _recievedMessage(self, message):
         """Add message to the messageQueue"""
         logging.info(str(message))
-        self.__messageQueue.put(message)
-        self.__messageEvent.set()
+        self._messageQueue.put(message)
+        self._messageEvent.set()
         
     
     def _uiMessage(self, message):
         """Add message to the uiQueue"""
-        self.__uiQueue.put(message)
-        self.__uiEvent.set()
+        self._uiQueue.put(message)
+        self._uiEvent.set()
     
     
 class BluetoothManagerError(Exception):
