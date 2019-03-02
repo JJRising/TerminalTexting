@@ -71,6 +71,8 @@ abstract class SMSHandler {
 
         byte[] getBytes() {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte type = (byte) 255;
+            out.write(type);
             out.write(number.getBytes(), 0, 12);
             out.write(contactName.length());
             out.write(contactName.getBytes(), 0, contactName.length());

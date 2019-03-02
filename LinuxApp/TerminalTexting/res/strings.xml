@@ -9,4 +9,6 @@
 	<string name="info_compose">Compose a message.</string>
 	<string name="info_connect_attempting">Attempting to make a connection via Bluetooth</string>
 	<string name="info_listen">Connection Good</string>
+	<string name="options_disconnect">no options</string>
+	<string name="info_disconnect">Disconnecting</string>
 </resources>

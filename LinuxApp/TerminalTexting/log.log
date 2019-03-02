@@ -1,22 +1,40 @@
 INFO:root:Logging started
-INFO:root:Curses started
-INFO:root:State: Start New State: Connect
-DEBUG:root:User Input: server connect
-DEBUG:root:CALLBACK!
-DEBUG:root:CONNECTING
-DEBUG:root:__serverConnection
-DEBUG:root:CALLBACK!
-DEBUG:root:CONNECTED
-DEBUG:root:User Input: pass
-INFO:root:State: Connect New State: Listen
-INFO:root:b"+14166704782\x0fTempContactName\x0f\x01\x00\x00K. You don't need to spend long on it. I'm planning on doing 2 more drafts before the final. So Im looking for big picture notes at this point."
-DEBUG:root:143
-DEBUG:root:b"K. You don't need to spend long on it. I'm planning on doing 2 more drafts before the final. So Im looking for big picture notes at this point."
-INFO:root:State: Listen New State: Disconnect
-INFO:root:b''
-DEBUG:root:CALLBACK!
-INFO:root:State: Disconnect New State: Connect
-DEBUG:root:User Input: exit
-INFO:root:State: Connect New State: Stop
-INFO:root:ThreadedTextBox stopped
-INFO:root:DisplayWindow stoped
+DEBUG:root:BluetoothService trying to get a command
+INFO:root:State: start,   NewState: connect
+INFO:root:keyboardInput
+DEBUG:root:connectAsServer
+DEBUG:root:none
+INFO:root:BluetoothService command: serverConnect
+DEBUG:root:IS THIS BLOCKING???
+DEBUG:root:BluetoothService trying to get a command
+INFO:root:note
+INFO:root:note
+INFO:root:connectionMade
+INFO:root:State: connect,   NewState: listen
+INFO:root:RecievedBluetoothMessage: b'\xff+14166704782\x0fTempContactName\x06\x00\x00\x00123456'
+DEBUG:root:byteArray: b'+14166704782\x0fTempContactName\x06\x00\x00\x00123456'
+DEBUG:root:phoneNumber: b'+14166704782'
+DEBUG:root:contactLength: 15
+DEBUG:root:contactName: b'TempContactName'
+DEBUG:root:messageLength: 6
+DEBUG:root:message: b'123456'
+INFO:root:receivedText
+INFO:root:keyboardInput
+INFO:root:State: listen,   NewState: disconnect
+DEBUG:root:Sending disconnect input command
+INFO:root:BluetoothService command: disconnect
+DEBUG:root:disconnecting, hi
+DEBUG:root:Remote Sock closed
+DEBUG:root:My Sock closed
+DEBUG:root:IOError in listen
+DEBUG:root:Should be disconnected now
+DEBUG:root:BluetoothService trying to get a command
+INFO:root:BluetoothService command: done
+DEBUG:root:BluetoothService trying to get a command
+INFO:root:disconnected
+INFO:root:State: disconnect,   NewState: connect
+INFO:root:keyboardInput
+INFO:root:State: connect,   NewState: stop
+INFO:root:BluetoothService command: stop
+DEBUG:root:disconnecting, hi
+DEBUG:root:Should be disconnected now
