@@ -305,7 +305,11 @@ class UserInterface():
         Used to avoid rewirting the code.
         '''
         if outType == BluetoothManager.OUTPUT_RECEIVED_TEXT_MESSAGE:
-            self.displayThread.printToDisplay(args['message'].phoneNumber, \
+            title = args['message'].contactName \
+                    + " (" \
+                    + args['message'].phoneNumber \
+                    + ")"
+            self.displayThread.printToDisplay(title, \
                                     self.colorSet.get('bluetoothManager'), \
                                     args['message'].message)
         elif outType == BluetoothManager.OUTPUT_BLUETOOTH_MESSAGE:

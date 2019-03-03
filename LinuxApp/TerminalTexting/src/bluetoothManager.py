@@ -59,17 +59,17 @@ class TextMessage():
         logging.debug(f"byteArray: {byteArray}")
         msg = MessageBuffer(byteArray)
         # get the phone Number
-        self.phoneNumber = str(msg.read(12))
+        self.phoneNumber = msg.read(12).decode()
         # get the contact's Name
         contactLength = int(msg.read(1))
-        self.contactName = str(msg.read(contactLength))
+        self.contactName = msg.read(contactLength).decode()
         # get the message
         messageLengthArray = msg.read(4)
         messageLength = messageLengthArray[0] \
                         + messageLengthArray[1] * 128 \
                         + messageLengthArray[2] * 128 * 128 \
                         + messageLengthArray[3] * 128 * 128 * 128
-        self.message = msg.read(messageLength)
+        self.message = msg.read(messageLength).decode()
         logging.debug(f"phoneNumber: {self.phoneNumber}")
         logging.debug(f"contactLength: {contactLength}")
         logging.debug(f"contactName: {self.contactName}")

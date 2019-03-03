@@ -2,11 +2,15 @@ package com.example.android.terminalTexting;
 
 import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
@@ -118,7 +122,7 @@ abstract class SMSHandler {
                 // Fill msgs array.
                 SmsMessage[] msgs;
                 msgs = new SmsMessage[pdus.length];
-                String number, contactName;
+                String number, contactName = "Unknown Number";
                 StringBuilder fullMessage = new StringBuilder();
                 for (int i = 0; i < msgs.length; i++) {
                     // Check Android version and use appropriate createFromPdu.
@@ -137,7 +141,26 @@ abstract class SMSHandler {
                 }
                 number = msgs[0].getOriginatingAddress();
                 // TODO: contactName
-                contactName = "TempContactName";
+                // Look up contact name
+                Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                        Uri.encode(number));
+                ContentResolver resolver = receiverContext.getContentResolver();
+                Log.d(LOG_TAG, "Hi there!");
+                try (Cursor cursor = resolver.query(uri, new String[]{
+                                ContactsContract.PhoneLookup.DISPLAY_NAME},
+                        null, null, null)) {
+                    Log.d(LOG_TAG, cursor.toString());
+                    if (cursor != null && cursor.getCount() > 0) {
+                        cursor.moveToFirst();
+                        Log.d(LOG_TAG, "fingers crossed");
+                        contactName = cursor.getString(
+                                cursor.getColumnIndex(ContactsContract.Data.DISPLAY_NAME));
+                        Log.d(LOG_TAG, contactName);
+                    }
+                } catch (Exception e) {
+
+                    contactName = "Unknown Number";
+                }
                 Log.d(LOG_TAG, fullMessage.toString());
                 MessagePackage msgPackage = new MessagePackage(
                         number,
