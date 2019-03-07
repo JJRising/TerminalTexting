@@ -54,6 +54,7 @@ class UserInterface():
         self.displayThread = None
         self.bluetoothManager = None
         self.inputQueue = Queue()
+        self.lastRecievedNumber = None
         
         self.__stateFunc = { \
             self.__STATE_CONNECT: (self.__enterConnect, \
@@ -217,9 +218,15 @@ class UserInterface():
                         self.newState = self.__STATE_DISCONNECT
                     elif myIn[1] == curses.ascii.SI: # ^O
                         # TODO: Reply function
+                        self.sendNumber = None
+                        self.displayThread.printStatus( \
+                            getString('info_number_compose'))
                         self.newState = self.__STATE_COMPOSE
                     elif myIn[1] == curses.ascii.ENQ: # ^E
                         # TODO: Reply function
+                        self.sendNumber = self.lastRecievedNumber
+                        self.displayThread.printStatus(\
+                                            getString('info_compose'))
                         self.newState = self.__STATE_COMPOSE
                     else:
                         pass
@@ -238,7 +245,6 @@ class UserInterface():
     
     def __enterDisconnect(self):
         self.displayThread.printOptions(getString('options_disconnect'))
-        self.displayThread.printStatus(getString('info_disconnect'))
         self.bluetoothManager.disconnect()
     
     def __Disconnect(self):
@@ -273,7 +279,6 @@ class UserInterface():
         self.displayThread.printOptions(getString('options_compose'))
         self.displayThread.printStatus(getString('info_number_compose'))
         self.inputThread.editMode(displayThread=self.displayThread)
-        self.sendNumber = None
     
     def __Compose(self):
         while self.newState == self.__STATE_COMPOSE:
@@ -318,6 +323,7 @@ class UserInterface():
         Used to avoid rewirting the code.
         '''
         if outType == BluetoothManager.OUTPUT_RECEIVED_TEXT_MESSAGE:
+            self.lastRecievedNumber = args['message'].phoneNumber
             title = args['message'].contactName \
                     + " (" \
                     + args['message'].phoneNumber \
