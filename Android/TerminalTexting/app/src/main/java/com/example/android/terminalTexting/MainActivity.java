@@ -27,10 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String LOG_TAG = "MainActivity";
 
     // Permission request codes
-    private static final int MY_PERMISSIONS_REQUEST_SEND_SMS = 1;
-    private static final int MY_PERMISSIONS_REQUEST_RECEIVE_SMS = 2;
-    private static final int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 3;
-    private static final int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 4;
+    private static final int MY_PERMISSIONS_REQUEST_EVERYTHING = 5;
 
     // Intent request codes
     private static final int REQUEST_CONNECT_DEVICE = 1;
@@ -72,20 +69,13 @@ public class MainActivity extends AppCompatActivity {
         updateStatus(Constants.STATE_NONE);
         mLogText = findViewById(R.id.comm_log);
 
-        // TODO: Address the warning about permission requests having to be one at a time.
         // Required Permissions
         ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.READ_CONTACTS},
-                MY_PERMISSIONS_REQUEST_READ_CONTACTS);
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.SEND_SMS},
-                MY_PERMISSIONS_REQUEST_SEND_SMS);
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.RECEIVE_SMS},
-                MY_PERMISSIONS_REQUEST_RECEIVE_SMS);
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
+                new String[]{Manifest.permission.READ_CONTACTS,
+                             Manifest.permission.SEND_SMS,
+                             Manifest.permission.RECEIVE_SMS,
+                             Manifest.permission.ACCESS_COARSE_LOCATION},
+                MY_PERMISSIONS_REQUEST_EVERYTHING);
 
         // Try to bind to a active BluetoothService
         Intent intent = new Intent(this, BluetoothService.class);
@@ -193,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void switchMessagingApp(View view) {
-        // TODO
+        // TODO: Remove, not needed
     }
 
     @Override

@@ -17,6 +17,7 @@ import android.util.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
 abstract class SMSHandler {
@@ -55,21 +56,32 @@ abstract class SMSHandler {
             // Read the number
             byte[] myNumberBytes = new byte[12];
             in.read(myNumberBytes, 0, 12);
+            Log.d("SMSHandler number:", new String(myNumberBytes));
             number = new String(myNumberBytes);
+
             // Read how long the contact name is
             byte[] contactLength = new byte[1];
-            in.read(contactLength, 12, 1);
+            in.read(contactLength, 0, 1);
+            int debugContactLength = (int) contactLength[0];
+            Log.d("SMSHandler ConLength:", Integer.toString(debugContactLength));
+
             // Read the contact name.
             byte[] myContactNameBytes = new byte[(int) contactLength[0]];
-            in.read(myContactNameBytes, 13, (int) contactLength[0]);
+            in.read(myContactNameBytes, 0, (int) contactLength[0]);
+            Log.d("SMSHandler contactName:", new String(myContactNameBytes));
             contactName = new String(myContactNameBytes);
+
             // Read how long the message is.
             byte[] m = new byte[4];
-            in.read(m, 13 + (int) contactLength[0], 4);
-            int messageLength = m[3]*128^3 + m[2]*128^2 + m[1]*128 + m[0];
+            in.read(m, 0, 4);
+            ByteBuffer messageByteBuf = ByteBuffer.wrap(m);
+            int messageLength = messageByteBuf.getInt();
+            Log.d("SMSHandler messLength: ", Integer.toString(messageLength));
+
             // Read the rest of the message.
             byte[] myMessageBytes = new byte[messageLength];
-            in.read(myMessageBytes, 13 + (int) contactLength[0] + 4, messageLength);
+            in.read(myMessageBytes, 0, messageLength);
+            Log.d("SMSHandler message:", new String(myMessageBytes));
             message = new String(myMessageBytes);
         }
 
@@ -82,11 +94,9 @@ abstract class SMSHandler {
             out.write(contactName.getBytes(), 0, contactName.length());
             Log.d("TERMTEXT.getBytes", Integer.toString(message.length()));
             int mLength = message.length();
-            for (int i = 0; i < 4; i++) {
-                Log.d("TERMTEXT.getBytes", Integer.toString(mLength%128));
-                out.write(mLength%128);
-                mLength/=128;
-            }
+            ByteBuffer buf = ByteBuffer.allocate(4);
+            buf.putInt(mLength);
+            out.write(buf.array(), 0, 4);
             out.write(message.getBytes(), 0, message.length());
             return out.toByteArray();
         }
@@ -140,7 +150,6 @@ abstract class SMSHandler {
                     // Pass strMessage to the callback method
                 }
                 number = msgs[0].getOriginatingAddress();
-                // TODO: contactName
                 // Look up contact name
                 Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
                         Uri.encode(number));
@@ -150,7 +159,7 @@ abstract class SMSHandler {
                                 ContactsContract.PhoneLookup.DISPLAY_NAME},
                         null, null, null)) {
                     Log.d(LOG_TAG, cursor.toString());
-                    if (cursor != null && cursor.getCount() > 0) {
+                    if (cursor.getCount() > 0) {
                         cursor.moveToFirst();
                         Log.d(LOG_TAG, "fingers crossed");
                         contactName = cursor.getString(

@@ -65,10 +65,9 @@ class TextMessage():
         self.contactName = msg.read(contactLength).decode()
         # get the message
         messageLengthArray = msg.read(4)
-        messageLength = messageLengthArray[0] \
-                        + messageLengthArray[1] * 128 \
-                        + messageLengthArray[2] * 128 * 128 \
-                        + messageLengthArray[3] * 128 * 128 * 128
+        messageLength = int.from_bytes(messageLengthArray, \
+                                       'big', \
+                                       signed=True)
         self.message = msg.read(messageLength).decode()
         logging.debug(f"phoneNumber: {self.phoneNumber}")
         logging.debug(f"contactLength: {contactLength}")
@@ -76,5 +75,14 @@ class TextMessage():
         logging.debug(f"messageLength: {messageLength}")
         logging.debug(f"message: {self.message}")
         
+def getBytes(phoneNumber, message):
+    output = phoneNumber.encode()
+    output += b'\x04'
+    output += b'none'
+    mLength = int(len(message))
+    output += mLength.to_bytes(4, 'big', signed=True)
+    output += message.encode()
+    return output
+    
         
         

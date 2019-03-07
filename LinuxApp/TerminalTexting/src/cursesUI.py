@@ -15,6 +15,7 @@ from src.inputThread import InputThread
 from src.displayThread import DisplayThread
 from src.bluetoothManager import BluetoothManager
 import logging
+from src import bluetoothManager
 
 STRINGS = ET.parse('res/strings.xml').getroot()
 UUID = "56abddf0-d4d2-45c7-9b2b-7837582d436f"
@@ -270,9 +271,9 @@ class UserInterface():
     
     def __enterCompose(self):
         self.displayThread.printOptions(getString('options_compose'))
-        self.displayThread.printStatus(getString('info_compose'))
-        self.inputThread.suspend()
-        self.tbox.edit()
+        self.displayThread.printStatus(getString('info_number_compose'))
+        self.inputThread.editMode(displayThread=self.displayThread)
+        self.sendNumber = None
     
     def __Compose(self):
         while self.newState == self.__STATE_COMPOSE:
@@ -288,17 +289,29 @@ class UserInterface():
                                     args['comment'] + " - " + \
                                     + str(args['error']))
                     return
-                elif outType == Tbox.OUTPUT_GATHER:
-                    self.newState = self.__STATE_LISTEN
+                elif outType == InputThread.OUTPUT_GATHER:
+                    if not self.sendNumber:
+                        self.sendNumber = args['message']
+                        self.displayThread.printStatus(\
+                                            getString('info_compose'))
+                        self.displayThread.clearTBox()
+                    else:
+                        logging.info(f"args['message': {args['message']}")
+                        blueMessage = \
+                            bluetoothManager.getBytes(self.sendNumber, \
+                                                      args['message'])
+                        logging.info(f"blueMessage: {blueMessage}")
+                        self.bluetoothManager.write(blueMessage)
+                        self.newState = self.__STATE_LISTEN
                     # TODO: Send
-                elif outType == Tbox.OUTPUT_CANCEL:
+                elif outType == InputThread.OUTPUT_CANCEL:
                     self.newState = self.__STATE_LISTEN
                 else:
                     pass # Weird
     
     def __leaveCompose(self):
-        self.tbox.clear()
-        self.inputThread.resume()
+        self.inputThread.editMode(value=False)
+        self.displayThread.clearTBox()
     
     def __standardHandlingMacro(self, outType, args):
         '''Handles the outputs of modules regardless of state

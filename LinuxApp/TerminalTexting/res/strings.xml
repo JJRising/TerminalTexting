@@ -6,6 +6,7 @@
 	<string name="options_listen">Disconnect: ^X    Compose: ^O    Reply: ^E</string>
 	<string name="info_listen">Listening for messages... Select an option.</string>
 	<string name="options_compose">Cancel: ^E    Send: ^K</string>
+	<string name="info_number_compose">What number should the message be sent to?</string>
 	<string name="info_compose">Compose a message.</string>
 	<string name="info_connect_attempting">Attempting to make a connection via Bluetooth</string>
 	<string name="info_listen">Connection Good</string>

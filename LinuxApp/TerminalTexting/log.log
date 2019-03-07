@@ -11,13 +11,26 @@ INFO:root:note
 INFO:root:note
 INFO:root:connectionMade
 INFO:root:State: connect,   NewState: listen
-INFO:root:RecievedBluetoothMessage: b'\xff+14166704782\x10Myself and Me, I\x0c\x00\x00\x00Testing 1234'
-DEBUG:root:byteArray: b'+14166704782\x10Myself and Me, I\x0c\x00\x00\x00Testing 1234'
+INFO:root:keyboardInput
+INFO:root:State: listen,   NewState: compse
+INFO:root:gather
+INFO:root:gather
+INFO:root:args['message': Testing the compose 1234.
+INFO:root:blueMessage: b'+14166704782\x04none\x00\x00\x00\x19Testing the compose 1234.'
+INFO:root:State: compse,   NewState: listen
+INFO:root:BluetoothService command: write
+DEBUG:root:Sending: b'+14166704782\x04none\x00\x00\x00\x19Testing the compose 1234.'
+DEBUG:root:BluetoothService trying to get a command
+INFO:root:BluetoothService command: done
+INFO:root:writeSuccess
+DEBUG:root:BluetoothService trying to get a command
+INFO:root:RecievedBluetoothMessage: b'\xff+14166704782\x10Myself and Me, I\x00\x00\x00\x19Testing the compose 1234.'
+DEBUG:root:byteArray: b'+14166704782\x10Myself and Me, I\x00\x00\x00\x19Testing the compose 1234.'
 DEBUG:root:phoneNumber: +14166704782
 DEBUG:root:contactLength: 16
 DEBUG:root:contactName: Myself and Me, I
-DEBUG:root:messageLength: 12
-DEBUG:root:message: Testing 1234
+DEBUG:root:messageLength: 25
+DEBUG:root:message: Testing the compose 1234.
 INFO:root:receivedText
 INFO:root:keyboardInput
 INFO:root:State: listen,   NewState: disconnect
@@ -28,8 +41,8 @@ DEBUG:root:Remote Sock closed
 DEBUG:root:My Sock closed
 DEBUG:root:IOError in listen
 INFO:root:disconnected
-DEBUG:root:Should be disconnected now
 INFO:root:State: disconnect,   NewState: connect
+DEBUG:root:Should be disconnected now
 DEBUG:root:BluetoothService trying to get a command
 INFO:root:BluetoothService command: done
 DEBUG:root:BluetoothService trying to get a command

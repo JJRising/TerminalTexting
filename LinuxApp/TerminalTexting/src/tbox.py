@@ -33,27 +33,10 @@ class Tbox(curses.textpad.Textbox):
         ret = curses.textpad.Textbox.gather(self)
         ret = ret.replace("\n", "")
         ret = ret.strip(" ")
-        self.output.put((self.OUTPUT_GATHER, {'message': ret}))
+        return ret
     
     def getInput(self):
         return self.win.getch()
-    
-    def edit(self, displayThread):
-        while True:
-            ch = self.win.getch()
-            if not ch:
-                continue
-            if ch == curses.ascii.VT:
-                # Confirm
-                self.output.put((self.OUTPUT_GATHER, \
-                                 {'message': self.gather()}))
-                return
-            if ch == curses.ascii.ENQ:
-                # Cancel
-                self.output.put((self.OUTPUT_CANCEL, {}))
-                return
-            displayThread.tBoxCommand(ch)
-        self.gather()
         
     def do_command(self, ch):
         "Process a single editing command."
@@ -72,7 +55,7 @@ class Tbox(curses.textpad.Textbox):
                 self.win.move(y-1, self._end_of_line(y-1))
             else:
                 self.win.move(y-1, self.maxx)
-            if ch in (curses.KEY_BACKSPACE):
+            if ch == curses.KEY_BACKSPACE:
                 self.win.delch()
         elif ch == curses.KEY_RIGHT:
             if x < self.maxx:
@@ -91,6 +74,7 @@ class Tbox(curses.textpad.Textbox):
                 self.win.move(y-1, x)
                 if x > self._end_of_line(y-1):
                     self.win.move(y-1, self._end_of_line(y-1))
+        self.win.refresh()
         
         
         

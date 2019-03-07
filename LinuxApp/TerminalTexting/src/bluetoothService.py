@@ -351,6 +351,7 @@ class BluetoothService(Thread):
     
     def _writeThread(self, buffer, messageID):
         try:
+            logging.debug(f"Sending: {buffer}")
             self._remoteSock.send(buffer)
         except IOError as e:
             self._outputWriteFailed(messageID, e, "")

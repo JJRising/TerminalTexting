@@ -42,6 +42,9 @@ class DisplayThread(Thread):
     def tBoxCommand(self, command):
         self.input.put((self.__TBOX_COMMAND, command))
         
+    def clearTBox(self):
+        self.input.put((self.__TBOX_CLEAR,))
+        
     def join(self, timeout=None):
         self.input.put((self.__STOP,))
         Thread.join(self, timeout=timeout)

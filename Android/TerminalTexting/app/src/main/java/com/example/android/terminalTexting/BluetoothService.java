@@ -12,7 +12,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.telephony.SmsManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -413,7 +412,6 @@ public class BluetoothService extends IntentService {
             int bytes;
             SMSHandler.MessagePackage msgPack;
 
-
             // Keep listening to the InputStream while connected
             while (mState == Constants.STATE_CONNECTED) {
                 try {
@@ -432,13 +430,23 @@ public class BluetoothService extends IntentService {
                     connectionLost();
                     break;
                 }
-                msgPack = new SMSHandler.MessagePackage(buffer);
-                Toast.makeText(BluetoothService.this,
-                        "Sending message to: " + msgPack.number,
-                        Toast.LENGTH_SHORT).show();
-//                SmsManager smsManager = SmsManager.getDefault();
-//                smsManager.sendTextMessage(msgPack.number, null, msgPack.message,
-//                        null, null);
+                Log.d(LOG_TAG, "buffer: " + new String(buffer));
+                try {
+                    msgPack = new SMSHandler.MessagePackage(buffer);
+                } catch (Exception e) {
+                    Log.i(LOG_TAG, "disconnecting due to read error\n" + e.toString());
+                    try {
+                        mmSocket.close();
+                    } catch (IOException e2) {
+                        Log.i(LOG_TAG, "unable to close() " +
+                                " socket during connection failure. " + e2.toString());
+                    }
+                    connectionLost();
+                    break;
+                }
+                SmsManager smsManager = SmsManager.getDefault();
+                smsManager.sendTextMessage(msgPack.number, null, msgPack.message,
+                        null, null);
             }
             Log.d(LOG_TAG, "ListenerThread is finishing");
             mSMSHandler.close();
