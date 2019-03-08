@@ -124,7 +124,11 @@ class BluetoothService(Thread):
             raise BluetoothManagerError()
     
     def write(self, message):
-        """Send a byte[] as a message to the connected device"""
+        """Send a byte[] as a message to the connected device
+        
+        Returns a messageID to be able to track if the write was
+        successful or not.
+        """
         if self.state == self.STATE_CONNECTED:
             self._messageCounter += 1
             messageID = self._messageCounter

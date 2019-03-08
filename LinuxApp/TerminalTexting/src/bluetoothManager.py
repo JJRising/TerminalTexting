@@ -11,6 +11,12 @@ class BluetoothManager(BluetoothService):
     
     Overrides the _outputBluetoothMessage so that the message can be
     formatted into the displayThreads required form.
+    
+    Public Constants:
+    OUTPUT_RECEIVED_TEXT_MESSAGE
+    
+    Public Methods:
+    (none)
     '''
     
     # Message Types
@@ -39,15 +45,20 @@ class BluetoothManager(BluetoothService):
             pass
         
 class MessageBuffer():
+    """a byte[] that tracks how much has been read"""
     def __init__(self, byteArray):
         self.pointer = 0
         self.buffer = byteArray
         
     def read(self, num):
+        """returns a byte[] of the next characters in the objects []
+        
+        returns a single character if num == 1
+        """
         newPointer = self.pointer + num
         output = self.buffer[self.pointer : newPointer]
         self.pointer = newPointer
-        if len(output) == 1:
+        if num == 1:
             return output[0]
         else:
             return output
@@ -76,6 +87,8 @@ class TextMessage():
         logging.debug(f"message: {self.message}")
         
 def getBytes(phoneNumber, message):
+    """Returns a byte[] in a sendable format that the android app can
+    turn into a text message."""
     output = phoneNumber.encode()
     output += b'\x04'
     output += b'none'
