@@ -7,8 +7,10 @@ from src.bluetoothService import BluetoothService
 import logging
 
 class BluetoothManager(BluetoothService):
-    '''
-    classdocs
+    '''Extended BluetoothService for project specific use
+    
+    Overrides the _outputBluetoothMessage so that the message can be
+    formatted into the displayThreads required form.
     '''
     
     # Message Types
@@ -19,9 +21,6 @@ class BluetoothManager(BluetoothService):
     OUTPUT_RECEIVED_TEXT_MESSAGE = "receivedText"
 
     def __init__(self, uuid, serviceName, outputQueue):
-        '''
-        Constructor
-        '''
         super(BluetoothManager, self).__init__(uuid, \
                                                serviceName, \
                                                outputQueue)
@@ -55,6 +54,7 @@ class MessageBuffer():
         
     
 class TextMessage():
+    """Contains phoneNumber, contactName, and message as Strings"""
     def __init__(self, byteArray):
         logging.debug(f"byteArray: {byteArray}")
         msg = MessageBuffer(byteArray)

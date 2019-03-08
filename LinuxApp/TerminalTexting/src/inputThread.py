@@ -1,14 +1,16 @@
 '''
-Created on Feb 25, 2019
-
 @author: jj
 '''
 from threading import Thread
 from curses import ascii
 
 class InputThread(Thread):
-    '''
-    classdocs
+    '''Thread class specifically for collecting keystokes
+    
+    Has two modes. In Standard Mode, keystokes are collected and passed
+    to the outputQueue. When switching to edit mode, a displayThread is
+    passed and the keystokes or commands are passed there using the 
+    displayThread's tBoxCommand(ch) method call.
     '''
     
     KEYBOARD_INPUT = "keyboardInput"
@@ -19,9 +21,6 @@ class InputThread(Thread):
     __EDIT_MODE = "edit"
 
     def __init__(self, outputQueue, tbox):
-        '''
-        Constructor
-        '''
         super(InputThread, self).__init__()
         self.output = outputQueue
         self.tbox = tbox
@@ -31,6 +30,15 @@ class InputThread(Thread):
         self.start()
     
     def editMode(self, value=True, displayThread=None):
+        """Change the input mode between standard and edit
+        
+        If the value is set to False, the display thread may be left as
+        None. If the value is left to be Ture, a displayThread must be
+        provided.
+        
+        value - Boolean where true sets the input thread to edit mode
+        displayThread - pointer to a displayThread.
+        """
         if value:
             self.mode = self.__EDIT_MODE
         else:
@@ -38,6 +46,7 @@ class InputThread(Thread):
         self.displayThread = displayThread
         
     def join(self, timeout=None):
+        """terminates and joins the thread after 1 last keystroke"""
         self.running = False
         Thread.join(self, timeout=timeout)
         

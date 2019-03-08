@@ -1,14 +1,15 @@
 '''
-Created on Feb 25, 2019
-
 @author: jj
 '''
 from threading import Thread
 from queue import Queue
 
 class DisplayThread(Thread):
-    '''
-    classdocs
+    '''Thread class specifically for outputting to the curses windows
+    
+    Curses is not thread safe and tends to behave poorly when multiple
+    threads attempt to output to the display simotaniously. This thread
+    collects output requests through a queue to handle them safely.
     '''
 
     __PRINT_OPTIONS = "options"
@@ -19,9 +20,13 @@ class DisplayThread(Thread):
     __STOP = "stop"
 
     def __init__(self, dis, info, tbox, opt):
-        '''
-        Constructor
-        '''
+        """Constuctor
+        
+        dis - scollWindow
+        info - textBar
+        tbox - tbox
+        opt - textBar
+        """
         super(DisplayThread, self).__init__()
         self.dis = dis
         self.info = info
@@ -40,6 +45,7 @@ class DisplayThread(Thread):
         self.input.put((self.__PRINT_TO_DISPLAY, title, titleColor, text))
         
     def tBoxCommand(self, command):
+        """Print characters or move cursor actions"""
         self.input.put((self.__TBOX_COMMAND, command))
         
     def clearTBox(self):

@@ -27,13 +27,17 @@ def startUI():
     curses.wrapper(ui.main)
 
 def getString(name):
+    """returns a string from the strings.xml resource file"""
     for e in STRINGS.findall('string'):
         if e.get('name') == name:
             return e.text
 
 class UserInterface():
-    '''
-    classdocs
+    '''Main application class. 
+    
+    All moduales are forked in the _setup() function of this class. All
+    other methods are state functions working as a Finite State
+    Machine.
     '''
 
     __STATE_START = "start"
@@ -44,9 +48,6 @@ class UserInterface():
     __STATE_STOP = "stop"
 
     def __init__(self):
-        '''
-        Constructor
-        '''
         self.state = self.__STATE_START
         self.newState = self.__STATE_START
         self.FSMBoolean = True
@@ -75,6 +76,7 @@ class UserInterface():
             }
         
     def main(self, stdscr):
+        """FSM loop"""
         try:
             self.__setup(stdscr)
             while self.FSMBoolean:
@@ -217,13 +219,11 @@ class UserInterface():
                     if myIn[1] == curses.ascii.CAN: # ^X
                         self.newState = self.__STATE_DISCONNECT
                     elif myIn[1] == curses.ascii.SI: # ^O
-                        # TODO: Reply function
                         self.sendNumber = None
                         self.displayThread.printStatus( \
                             getString('info_number_compose'))
                         self.newState = self.__STATE_COMPOSE
                     elif myIn[1] == curses.ascii.ENQ: # ^E
-                        # TODO: Reply function
                         self.sendNumber = self.lastRecievedNumber
                         self.displayThread.printStatus(\
                                             getString('info_compose'))
@@ -308,7 +308,6 @@ class UserInterface():
                         logging.info(f"blueMessage: {blueMessage}")
                         self.bluetoothManager.write(blueMessage)
                         self.newState = self.__STATE_LISTEN
-                    # TODO: Send
                 elif outType == InputThread.OUTPUT_CANCEL:
                     self.newState = self.__STATE_LISTEN
                 else:

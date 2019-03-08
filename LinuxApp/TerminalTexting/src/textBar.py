@@ -1,19 +1,16 @@
 '''
-Created on Feb 25, 2019
-
 @author: jj
 '''
 
 class TextBar():
-    '''
-    classdocs
+    '''A class for a single line of text window
+    
+    win - a curses window object
+    colorPair - a curses colorPair object
     '''
 
 
     def __init__(self, win, colorPair):
-        '''
-        Constructor
-        '''
         self.win = win
         self.pair = colorPair
         self.win.bkgd(' ', self.pair)

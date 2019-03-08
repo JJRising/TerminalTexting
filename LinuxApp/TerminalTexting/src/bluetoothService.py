@@ -13,8 +13,40 @@ import bluetooth
 import logging
 
 class BluetoothService(Thread):
-    '''
-    classdocs
+    '''Create and manage bluetooth serial connections
+    
+    Class deigning to asyncronusly manage bluetooth connections. This
+    class utilizes the pyBluez project to interact with the bluetooth
+    adapter. Results are returned through a Queue that should be
+    provided thorugh the constructor.
+    
+    This class was written to be completely resuable for all pybluez
+    projects.
+    
+    Public Constants:
+    STATE_NONE
+    STATE_CONNECTING
+    STATE_CONNECTED
+    OUTPUT_DISCOVER_STARTED
+    OUTPUT_DISCOVER_RESULT
+    OUTPUT_DISCOVER_COMPLETE
+    OUTPUT_CONNECTION_MADE
+    OUTPUT_CONNECTION_FAILED
+    OUTPUT_CONNECTION_LOST
+    OUTPUT_DISCONNECTED
+    OUTPUT_BLUETOOTH_MESSAGE
+    OUTPUT_WRITE_SUCCESS
+    OUTPUT_WRITE_FAILED
+    OUTPUT_ERROR
+    OUTPUT_NOTE
+    
+    Public Methods:
+    discover()
+    connectAsServer()
+    connectAsClient(String macID)
+    write(byte[] message)
+    disconnect()
+    join()
     '''
     
     # State constants
@@ -64,7 +96,7 @@ class BluetoothService(Thread):
         self.uuid = uuid
         self.name = serviceName
         self.commandInput = Queue()
-        self.outputQueue = outputQueue
+        self.outputQueue = outputQueue # Use the _output() method to access
         self.threadList = []
         self._mySock = None
         self._remoteSock = None
@@ -74,21 +106,25 @@ class BluetoothService(Thread):
         self.start()
         
     def discover(self):
+        """Launch a thread that begins the discovery process"""
         self.commandInput.put((self.__DISCOVER,))
         
     def connectAsServer(self):
+        """Launch a thread to make a connection as a bluetooth Server"""
         if self.state == self.STATE_NONE:
             self.commandInput.put((self.__SERVER_CONNECT,))
         else:
             raise BluetoothManagerError()
     
     def connectAsClient(self, macID):
+        """Launch a thread to make a connection as a bluetooth Client"""
         if self.state == self.STATE_NONE:
             self.commandInput.put((self.__Client_CONNECT, macID))
         else:
             raise BluetoothManagerError()
     
     def write(self, message):
+        """Send a byte[] as a message to the connected device"""
         if self.state == self.STATE_CONNECTED:
             self._messageCounter += 1
             messageID = self._messageCounter
@@ -98,15 +134,24 @@ class BluetoothService(Thread):
             raise BluetoothWriteError()
         
     def disconnect(self):
+        """Disconnect from the connected device"""
         if self.state != self.STATE_NONE:
             logging.debug("Sending disconnect input command")
             self.commandInput.put((self.__DISCONNECT,))
         
     def join(self, timeout=None):
+        """Request to join the thread that runs the Bluetooth Serivce"""
         self.commandInput.put((self.__STOP,))
         Thread.join(self, timeout=timeout)
     
+    #-----------------------------Output Methods-------------------------------
+    
     def _output(self, outType, args):
+        """Adds an output to the outputQueue
+        
+        Every output should use this method to write to the Queue in
+        order to preserve consistancy/readability on the receiving end.
+        """
         self.outputQueue.put((outType, args))
         
     def _outputDiscoveryStarted(self):
@@ -152,9 +197,14 @@ class BluetoothService(Thread):
     #-----------------------------Internal Methods-----------------------------
     
     def _threadDone(self, myThread):
+        """called when a worker thread completes its execution
+        
+        so it may be joined and cleaned up.
+        """
         self.commandInput.put((self.__THREAD_DONE, myThread))
     
     def run(self):
+        """Endless loop waiting for inputs instructions"""
         while True:
             logging.debug(f"BluetoothService trying to get a command")
             command = self.commandInput.get()
@@ -232,6 +282,7 @@ class BluetoothService(Thread):
                     continue
         
     def _discoverTread(self):
+        """Scans the area for discoverable bluetooth devices"""
         self._outputDiscoveryStarted()
         devices = bluetooth.discover_devices(duration=8, 
                                              flush_cache=True, 
@@ -242,6 +293,7 @@ class BluetoothService(Thread):
         self._outputDiscoveryComplete()
         
     def _connectAsServerThread(self):
+        """Allow a connection to be made from a remote device"""
         try:
             self._mySock = bluetooth.BluetoothSocket()
             self._mySock.bind(("", bluetooth.PORT_ANY))
@@ -287,6 +339,7 @@ class BluetoothService(Thread):
         self._listen()
     
     def _connectAsClientThread(self, address):
+        """Attempt to make a connection with another bluetooth device."""
         try:
             foundServices = bluetooth.find_service(self.name, \
                                                    self.uuid, \
@@ -336,6 +389,7 @@ class BluetoothService(Thread):
         self.state = self.STATE_NONE
     
     def _listen(self):
+        """Wait for an incoming message from the connected device"""
         while self.state == self.STATE_CONNECTED:
             try:
                 buffer = self._remoteSock.recv(1024)
@@ -350,6 +404,7 @@ class BluetoothService(Thread):
                 return
     
     def _writeThread(self, buffer, messageID):
+        """Send a message to the connected device"""
         try:
             logging.debug(f"Sending: {buffer}")
             self._remoteSock.send(buffer)
@@ -359,6 +414,7 @@ class BluetoothService(Thread):
             self._outputWriteSuccess(messageID)
         
 class WorkerThread(Thread):
+    """Thread class that passes itself back to its caller upon completion"""
     def __init__(self, context, group=None, target=None, name=None, args=(), 
                  kwargs={}, *, daemon=None):
         self.context = context
@@ -378,6 +434,7 @@ class WorkerThread(Thread):
         self.canceled = True
         
 class RemoteDevice:
+    """Simple structure for passing related data about a device"""
     def __init__(self, name, address, channel):
         self.name = name
         self.address = address

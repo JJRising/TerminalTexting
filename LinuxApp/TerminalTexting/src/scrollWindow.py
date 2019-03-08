@@ -1,24 +1,23 @@
 '''
-Created on Feb 25, 2019
-
 @author: jj
 '''
 
 class ScrollWindow():
-    '''
-    classdocs
-    '''
+    '''Contains a curses window and methods to print to it.'''
 
     def __init__(self, win):
-        '''
-        Constructor
-        '''
         self.win = win
         win.scrollok(True)
         self.__maxY, self.__maxX = win.getmaxyx()
         self.win.refresh()
         
     def addEntry(self, title, titleColor, message):
+        """Scrolls all text up and inserts a new enrty to the bottom
+        
+        title - String containing the text to be printed as the title
+        titleColor - curses colorPair object for the title String
+        message - String for the base message
+        """
         self._printTitleLine(title, titleColor)
         self._println(message)
         self.win.refresh()
@@ -36,7 +35,7 @@ class ScrollWindow():
         
         if len(text) <= lineLengthRemaining:
             self.win.addstr(text)
-        else:
+        else: # break the string up into printable sections
             tmp = text[:lineLengthRemaining]
             text = text[lineLengthRemaining:-1]
             self.win.addstr(tmp)

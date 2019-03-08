@@ -1,23 +1,27 @@
 '''
-Created on Feb 25, 2019
-
 @author: jj
 '''
 
 import curses.textpad
 
 class Tbox(curses.textpad.Textbox):
-    '''
-    classdocs
+    '''Extends and overrides parts of the curses Textbox
+    
+    Changes:
+    
+    1.  gather() now returns the string without the linebreaks and 
+        stips the white spaces from the beginning and end.
+    2.  Provides an accessor getInput() so another class can collect
+        inputs.
+    3.  Overrides do_command(ch) so that the functionality of the ctrl
+        keystrokes are changed and that the input collection and
+        display printing can happen on seperate threads.
     '''
     
     OUTPUT_GATHER = "gatherComplete"
     OUTPUT_CANCEL = "gatherCancel"
 
     def __init__(self, win, outputQueue):
-        '''
-        Constructor
-        '''
         super(Tbox, self).__init__(win)
         self.output = outputQueue
         self.win.refresh()
@@ -36,10 +40,15 @@ class Tbox(curses.textpad.Textbox):
         return ret
     
     def getInput(self):
+        """Returned a keystroke"""
         return self.win.getch()
         
     def do_command(self, ch):
-        "Process a single editing command."
+        """Overrides the subclass' method
+        
+        Processes a single command for when the input thread is in
+        edit mode.
+        """
         self._update_max_yx()
         (y, x) = self.win.getyx()
         self.lastcmd = ch
