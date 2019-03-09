@@ -19,7 +19,7 @@ The Linux application uses curses and thus needs to be launched from a terminal 
 - Will likely use this project to experiment with other user interface options.
 
 ## Legal
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the GNU General Public License - see the [LICENSE.md](LICENSE.md) file for details
 
 ## Acknowledgments
 Special thanks to whomever it is at Google that wrote the [Android BluetoothChat Sample](https://github.com/googlesamples/android-BluetoothChat) project for providing code inspiration for the android side bluetooth service.
