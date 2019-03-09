@@ -23,6 +23,7 @@ SERVICE_NAME = "TerminalTexting"
 COMMAND_WINDOW_MIN_HEIGHT = 3
 
 def startUI():
+    """Entry point"""
     ui = UserInterface()
     curses.wrapper(ui.main)
 
@@ -38,6 +39,15 @@ class UserInterface():
     All moduales are forked in the _setup() function of this class. All
     other methods are state functions working as a Finite State
     Machine.
+    
+    Each state has an entry method, leave method and state method. The
+    entry method is called when that state is started. The state method
+    contains a loop that continues until the newState variable is
+    updated. The leave method is called when the newState variable is
+    updated and a state transition will occur.
+    
+    Each of the state methods involve listening for a new input from
+    one of the worker threads and exicutes the appropriate behaviour.
     '''
 
     __STATE_START = "start"
@@ -140,11 +150,13 @@ class UserInterface():
         cwinBorderWin.border()
         cwinBorderWin.refresh()
         
+        # Create the specific modules with the created windows
         dis = ScrollWindow(dwin)
         info = TextBar(iwin, self.colorSet.get('standard'))
         opt = TextBar(swin, self.colorSet.get('options'))
         self.tbox = Tbox(cwin, self.inputQueue)
         
+        # Launch inputThread, displayThread, and bluetoothManager Thread
         self.inputThread = InputThread(self.inputQueue, self.tbox)
         self.displayThread = DisplayThread(dis, info, self.tbox, opt)
         self.bluetoothManager = BluetoothManager(UUID, \
