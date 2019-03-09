@@ -20,6 +20,11 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+/**
+ * Abstract class that contains a Broadcast Receiver for incoming SMS as well
+ * as a class that can turn those SMS into a byte[] that can be sent over
+ * bluetooth.
+ */
 abstract class SMSHandler {
     private final String LOG_TAG = "SMSHandler";
 
@@ -34,11 +39,29 @@ abstract class SMSHandler {
         receiverContext.registerReceiver(mSmsReceiver, smsReceivedFilter);
     }
 
+    /**
+     * Inner class for creating sendable SMS from a byte[] as well as creating
+     * a byte[] from received SMS.
+     *
+     * Format of the byte[] is:
+     * 1 byte set to 255 indicating that this is a SMS
+     * 12 bytes containing the phone number in string format (+10000000000)
+     * 1 byte containing the length of the contact's name
+     * a variable number of bytes containing the contacts name in string format
+     * 4 bytes containing the length of the message
+     * a variable number of bytes containing the message in string format
+     */
     static class MessagePackage {
         String number;
         String contactName;
         String message;
 
+        /**
+         * Constructor for creating a MessagePackage from a received SMS.
+         * @param number - phone number of sender
+         * @param contactName - Name of sender if in contacts
+         * @param message - message portion of the SMS
+         */
         MessagePackage(String number, String contactName, String message) {
             if (number.length() != 12) {
                 if (number.length() == 10) {
@@ -51,6 +74,10 @@ abstract class SMSHandler {
             this.message = message;
         }
 
+        /**
+         * Constructor for creating a MessagePackage from a byte[].
+         * @param bytes - byte array obtained over bluetooth
+         */
         MessagePackage(byte[] bytes) {
             ByteArrayInputStream in = new ByteArrayInputStream(bytes);
             // Read the number
@@ -102,18 +129,23 @@ abstract class SMSHandler {
         }
     }
 
+    /**
+     * close() should be called to unregister the SMS broadcast receiver
+     */
     public void close() {
         receiverContext.unregisterReceiver(mSmsReceiver);
     }
 
+    /**
+     * Abstract method that is called at the end of the SMS broadcast receiver.
+     * Needs to be implemented by the calling service.
+     * @param msg
+     */
     public abstract void callback(MessagePackage msg);
 
-    public void sendText(String phoneNumber, String smsMessage) {
-        SmsManager smsManager = SmsManager.getDefault();
-        smsManager.sendTextMessage(phoneNumber, null, smsMessage,
-                null, null);
-    }
-
+    /**
+     * Broadcast Receiver that runs every time the device receives and SMS.
+     */
     public class SmsReceiver extends BroadcastReceiver {
         public static final String pdu_type = "pdus";
 

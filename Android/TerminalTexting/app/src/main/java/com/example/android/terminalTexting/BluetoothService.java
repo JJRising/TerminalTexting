@@ -20,7 +20,8 @@ import java.util.UUID;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
+ * a service on a separate handler thread. The code for this class was heavily
+ * influenced by the "Android BluetoothChat Sample" project.
  */
 public class BluetoothService extends IntentService {
     // Debugging
@@ -74,6 +75,10 @@ public class BluetoothService extends IntentService {
         context.startService(intent);
     }
 
+    /**
+     * Stop all running threads forked from the service and set their
+     * values to null.
+     */
     public void stop() {
         if (mListenerThread != null)
             mListenerThread.cancel();
@@ -83,6 +88,12 @@ public class BluetoothService extends IntentService {
         mConnectThread = null;
     }
 
+    /**
+     * Used for binding to the service. Needed for whenever an activity, or
+     * other service want to send a request to this service.
+     * @param intent - contains an Action for the service
+     * @return LocalBinder allowing the binding service to access this class
+     */
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -104,6 +115,9 @@ public class BluetoothService extends IntentService {
     }
 //-----------------------------------Process Flow Methods------------------------------------//
 
+    /**
+     * Constructor, not really interesting...
+     */
     public BluetoothService() {
         super("BluetoothService");
         mAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -185,8 +199,7 @@ public class BluetoothService extends IntentService {
     }
 
     /**
-     * Handle action Foo in the provided background thread with the provided
-     * parameters.
+     * Handle action Server Connect in the provided background thread.
      */
     private void handleActionServerConnect() {
         // TODO: Handle action server connect
@@ -194,8 +207,7 @@ public class BluetoothService extends IntentService {
     }
 
     /**
-     * Handle action Baz in the provided background thread with the provided
-     * parameters.
+     * Handle action Client Connect in the provided background thread.
      */
     private void handleActionClientConnect(String deviceAddress) {
 
@@ -222,6 +234,12 @@ public class BluetoothService extends IntentService {
 
     //--------------------------------User Feedback----------------------------------------------//
 
+    /**
+     * Sends the information about the connected device to the user interface so
+     * the broadcast receiver can update the display.
+     * @param deviceName
+     * @param deviceAddress
+     */
     private void updateUserInterfaceToConnectedDevice(String deviceName,
                                                       String deviceAddress) {
         Log.d(LOG_TAG, "Updating the User Interface");
@@ -253,6 +271,11 @@ public class BluetoothService extends IntentService {
 
     //--------------------------------Connection Handling----------------------------------------//
 
+    /**
+     * Called when a connection has been made by either the server or client methods.
+     * @param socket
+     * @param device
+     */
     private void connected(BluetoothSocket socket, BluetoothDevice device) {
         Log.d(LOG_TAG, "connected");
 
@@ -282,6 +305,9 @@ public class BluetoothService extends IntentService {
         stop();
     }
 
+    /**
+     * Called when the was an attemped connection that couldn't be completed.
+     */
     private void connectionFailed() {
         Log.d(LOG_TAG, "connectionLost()");
         mState = Constants.STATE_NONE;
@@ -292,6 +318,9 @@ public class BluetoothService extends IntentService {
         updateUserInterfaceToNewState();
     }
 
+    /**
+     * Called when a connection had been made but was lost for some reason.
+     */
     private void connectionLost() {
         Log.d(LOG_TAG, "connectionLost()");
         mState = Constants.STATE_NONE;
@@ -373,7 +402,10 @@ public class BluetoothService extends IntentService {
         }
     }
 
-
+    /**
+     * Thread forked from the connection thread made for listening for
+     * incoming messages from the connected device.
+     */
     private class ListenerThread extends Thread {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;

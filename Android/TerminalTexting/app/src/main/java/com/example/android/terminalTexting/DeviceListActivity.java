@@ -114,6 +114,9 @@ public class DeviceListActivity extends AppCompatActivity {
         this.unregisterReceiver(mReceiver);
     }
 
+    /**
+     * Performs a bluetooth discovery scan to find near by unpaired devices.
+     */
     private void doDiscovery() {
         Log.d(LOG_TAG, "doDiscovery()");
 

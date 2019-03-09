@@ -118,6 +118,11 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Changes the Status text at the top of the activity depending on the
+     * bluetooth Services state.
+     * @param newStatus - equals a value from the Constants interface.
+     */
     void updateStatus(int newStatus) {
         String statusTitle = getString(R.string.status);
         String statusTxt;
@@ -145,6 +150,11 @@ public class MainActivity extends AppCompatActivity {
         mStatusText.setText(displayTxt);
     }
 
+    /**
+     * Changes the text at the top of the activity
+     * @param name - bluetooth name of the connected device
+     * @param address - bluetooth address of the connected device
+     */
     void updateConnectedDevice(String name, String address) {
         String nameTitle = getString(R.string.device_name);
         String addressTitle = getString(R.string.device_id);
@@ -186,6 +196,12 @@ public class MainActivity extends AppCompatActivity {
         // TODO: Remove, not needed
     }
 
+    /**
+     * Result from the DeviceListActivity
+     * @param requestCode - should always be REQUEST_CONNECT_DEVICE
+     * @param resultCode - from the DeviceListActivity
+     * @param data - Intent containing the address of the device to connect to.
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         switch (requestCode) {
@@ -197,6 +213,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Launches the DeviceListActivity to get a device to connect to and starts
+     * a bluetooth service to connect to that device.
+     * @param data
+     */
     private void connectDevice(Intent data) {
         // Display Toast message that you are trying to connect
         String deviceName;
@@ -217,17 +238,30 @@ public class MainActivity extends AppCompatActivity {
         BluetoothService.startClientConnect(this, address);
     }
 
+    /**
+     * Sends an intent to the bluetoothService to disconnect the currently
+     * connected device.
+     */
     private void disconnectDevice() {
         Intent intent = new Intent(this, BluetoothService.class);
         intent.setAction(Constants.STOP_CURRENT_CONNECTION_ACTION);
         basicServiceConnectionIsBound = bindService(intent, basicServiceConnection, 0);
     }
 
+    /**
+     * Printing to the scolling text window at the bottom of the activity.
+     * @param txt - text to be printed
+     */
     void textLog(String txt) {
         String my_txt = "\n" + txt;
         mLogText.append(my_txt);
     }
 
+    /**
+     * Binding to the BluetoothService for requesting and receiving the current
+     * bluetooth state. Is needed for when loading the activity while the
+     * service is running.
+     */
     private Boolean requestUpdateConnectionIsBound = false;
     private ServiceConnection requestUpdateConnection = new ServiceConnection() {
         // Called when the connection with the service is established
@@ -253,6 +287,9 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     * Binding to the BluetoothService for sending basic instructions such as disconnect.
+     */
     private Boolean basicServiceConnectionIsBound = false;
     private ServiceConnection basicServiceConnection = new ServiceConnection() {
         @Override
@@ -266,7 +303,9 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-
+    /**
+     * Receives a broadcast sent from the BluetoothService indicating state transitions.
+     */
     public class BluetoothStateReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
